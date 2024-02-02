@@ -15,6 +15,7 @@ class ASVspoof2019(Dataset):
         self.path_to_features = path_to_features
         self.part = part
         self.ptf = os.path.join(path_to_features, self.part)
+        # self.ptf = path_to_features
         # self.path_to_audio = os.path.join(self.ptd, access_type, 'ASVspoof2019_'+access_type+'_'+ self.part +'/flac/')
         self.genuine_only = genuine_only
         self.feat_len = feat_len
@@ -24,7 +25,8 @@ class ASVspoof2019(Dataset):
         if self.part == 'train':
             protocol = os.path.join(self.path_to_protocol, 'ASVspoof2019.'+access_type+'.cm.'+ self.part + '.trn.txt')
         else:
-            protocol = os.path.join(self.path_to_protocol, 'ASVspoof2019.'+access_type+'.cm.'+ self.part + '.trl.txt')
+            # protocol = os.path.join(self.path_to_protocol, 'ASVspoof2019.'+access_type+'.cm.'+ self.part + '.trl.txt')
+            protocol = path_to_protocol
         if self.access_type == 'LA':
             self.tag = {"-": 0, "A01": 1, "A02": 2, "A03": 3, "A04": 4, "A05": 5, "A06": 6, "A07": 7, "A08": 8, "A09": 9,
                       "A10": 10, "A11": 11, "A12": 12, "A13": 13, "A14": 14, "A15": 15, "A16": 16, "A17": 17, "A18": 18,
@@ -63,8 +65,10 @@ class ASVspoof2019(Dataset):
         #         feat_mat = pickle.load(feature_handle)
 
         try:
-            with open(self.ptf + '/'+ self.feature + '_' + filename + '.pkl', 'rb') as feature_handle:
-                feat_mat = pickle.load(feature_handle)
+            # with open(self.ptf + '/'+ self.feature + '_' + filename + '.pkl', 'rb') as feature_handle:
+            #     feat_mat = pickle.load(feature_handle)
+            with open(self.ptf + '/' + filename + '.pkl', 'rb') as feature_handle:
+                feat_mat = pickle.load(feature_handle).T
         except:
             # add this exception statement since we may change the data split
             def the_other(train_or_dev):

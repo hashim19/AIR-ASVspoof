@@ -10,7 +10,7 @@ from tqdm import tqdm
 import eval_metrics as em
 import numpy as np
 
-def test_model(feat_model_path, loss_model_path, part, add_loss, device):
+def test_model(feat_model_path, loss_model_path, part, add_loss, device, data_dir, protocol_file_path, feat_path, d_name):
     dirname = os.path.dirname
     basename = os.path.splitext(os.path.basename(feat_model_path))[0]
     if "checkpoint" in dirname(feat_model_path):
@@ -20,14 +20,17 @@ def test_model(feat_model_path, loss_model_path, part, add_loss, device):
     model = torch.load(feat_model_path, map_location="cuda")
     model = model.to(device)
     loss_model = torch.load(loss_model_path) if add_loss != "softmax" else None
-    test_set = ASVspoof2019("LA", "./LA/Features/",
-                            "/home/hashim/PhD/Data/AsvSpoofData_2019/train/LA/ASVspoof2019_LA_cm_protocols/", part,
-                            "LFCC", feat_len=750, padding="repeat")
+    # test_set = ASVspoof2019("LA", "./LA/Features/",
+    #                         "/home/hashim/PhD/Data/AsvSpoofData_2019/train/LA/ASVspoof2019_LA_cm_protocols/", part,
+    #                         "LFCC", feat_len=750, padding="repeat")
+
+    test_set = ASVspoof2019("LA", feat_path, protocol_file_path, part, "LFCC", feat_len=750, padding="repeat")
+
     testDataLoader = DataLoader(test_set, batch_size=32, shuffle=False, num_workers=0,
                                 collate_fn=test_set.collate_fn)
     model.eval()
 
-    with open(os.path.join(dir_path, 'checkpoint_cm_score.txt'), 'w') as cm_score_file:
+    with open(os.path.join(dir_path, d_name + '_checkpoint_cm_score.txt'), 'w') as cm_score_file:
         for i, (lfcc, audio_fn, tags, labels) in enumerate(tqdm(testDataLoader)):
             lfcc = lfcc.unsqueeze(1).float().to(device)
             tags = tags.to(device)
@@ -49,14 +52,18 @@ def test_model(feat_model_path, loss_model_path, part, add_loss, device):
                                           "spoof" if labels[j].data.cpu().numpy() else "bonafide",
                                           score[j].item()))
 
-    eer_cm, min_tDCF = compute_eer_and_tdcf(os.path.join(dir_path, 'checkpoint_cm_score.txt'),
-                                            "/home/hashim/PhD/Data/AsvSpoofData_2019/train/")
-    return eer_cm, min_tDCF
+    # eer_cm, min_tDCF = compute_eer_and_tdcf(os.path.join(dir_path, d_name + '_checkpoint_cm_score.txt'),
+    #                                         "/home/hashim/PhD/Data/AsvSpoofData_2019/train/")
 
-def test(model_dir, add_loss, device):
+    eer_cm = compute_eer_and_tdcf(os.path.join(dir_path, d_name + '_checkpoint_cm_score.txt'),
+                                            "/home/hashim/PhD/Data/AsvSpoofData_2019/train/")
+    return eer_cm
+
+def test(model_dir, add_loss, device, data_dir='data', protocol_path='', feat_dir='', data_name = ''):
     model_path = os.path.join(model_dir, "anti-spoofing_lfcc_model.pt")
     loss_model_path = os.path.join(model_dir, "anti-spoofing_loss_model.pt")
-    test_model(model_path, loss_model_path, "eval", add_loss, device)
+
+    test_model(model_path, loss_model_path, "eval", add_loss, device, data_dir, protocol_path, feat_dir, data_name)
 
 def test_individual_attacks(cm_score_file):
     asv_score_file = os.path.join('/data/neil/DS_10283_3336',
@@ -130,15 +137,37 @@ def test_individual_attacks(cm_score_file):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('-m', '--model_dir', type=str, help="path to the trained model", default="./models/ocsoftmax")
-    parser.add_argument('-l', '--loss', type=str, default="ocsoftmax",
-                        choices=["softmax", 'amsoftmax', 'ocsoftmax'], help="loss function")
-    parser.add_argument("--gpu", type=str, help="GPU index", default="0")
-    args = parser.parse_args()
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
-    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    test(args.model_dir, args.loss, args.device)
+    # parser = argparse.ArgumentParser(description=__doc__)
+    # parser.add_argument('-m', '--model_dir', type=str, help="path to the trained model", default="./models1028/ocsoftmax")
+    # parser.add_argument('-l', '--loss', type=str, default="ocsoftmax",
+    #                     choices=["softmax", 'amsoftmax', 'ocsoftmax'], help="loss function")
+    # parser.add_argument("--gpu", type=str, help="GPU index", default="0")
+    # parser.add_argument("--f", type=str, )
+    # args = parser.parse_args()
+    # os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    # args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model_dir = "./models1028/ocsoftmax"
+    loss = "ocsoftmax"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    db_folder = '/data/Data/'  # put your database root path here
+    # laundering_type = 'Noise_Addition'
+    laundering_type = 'AsvSpoofData_2019/train/LA/'
+    # laundering = 'AsvSpoofData_2019_WN_0_0_5'
+    laundering = 'ASVspoof2019_LA_eval'
+    # protocol_pth = 'white_0_0_5_protocol.txt'
+    protocol_pth = 'ASVspoof2019.LA.cm.eval.trl.txt'
+    
+    # eval_folder = db_folder + laundering_type + laundering + '/'
+    eval_folder = db_folder + laundering_type + laundering + '/' + 'flac/'
+    # eval_ndx = db_folder + 'AsvSpoofData_2019_protocols/' + protocol_pth
+    eval_ndx = db_folder + laundering_type + 'ASVspoof2019_LA_cm_protocols/' + protocol_pth
+    # feat_dir = os.path.join('/data/Features/', laundering_type, laundering, 'lfcc_features')
+    feat_dir = os.path.join('/data/Features/', laundering, 'lfcc_features')
+
+    test(model_dir, loss, device, data_dir=eval_folder, protocol_path=eval_ndx, feat_dir=feat_dir, data_name = laundering)
 
     # eer_cm_lst, min_tDCF_lst = test_individual_attacks(os.path.join(args.model_dir, 'checkpoint_cm_score.txt'))
     # print(eer_cm_lst)
