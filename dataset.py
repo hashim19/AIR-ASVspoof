@@ -21,7 +21,10 @@ class ASVspoof2019(Dataset):
         self.feature = feature
         self.path_to_protocol = path_to_protocol
         self.padding = padding
-        protocol = os.path.join(self.path_to_protocol, 'ASVspoof2019.'+access_type+'.cm.'+ self.part + '.trl.txt')
+        if self.part == 'train':
+            protocol = os.path.join(self.path_to_protocol, 'ASVspoof2019.'+access_type+'.cm.'+ self.part + '.trn.txt')
+        else:
+            protocol = os.path.join(self.path_to_protocol, 'ASVspoof2019.'+access_type+'.cm.'+ self.part + '.trl.txt')
         if self.access_type == 'LA':
             self.tag = {"-": 0, "A01": 1, "A02": 2, "A03": 3, "A04": 4, "A05": 5, "A06": 6, "A07": 7, "A08": 8, "A09": 9,
                       "A10": 10, "A11": 11, "A12": 12, "A13": 13, "A14": 14, "A15": 15, "A16": 16, "A17": 17, "A18": 18,
@@ -47,8 +50,20 @@ class ASVspoof2019(Dataset):
 
     def __getitem__(self, idx):
         speaker, filename, _, tag, label = self.all_info[idx]
+        # try:
+        #     with open(self.ptf + '/'+ filename + self.feature + '.pkl', 'rb') as feature_handle:
+        #         feat_mat = pickle.load(feature_handle)
+        # except:
+        #     # add this exception statement since we may change the data split
+        #     def the_other(train_or_dev):
+        #         assert train_or_dev in ["train", "dev"]
+        #         res = "dev" if train_or_dev == "train" else "train"
+        #         return res
+        #     with open(os.path.join(self.path_to_features, the_other(self.part)) + '/'+ filename + self.feature + '.pkl', 'rb') as feature_handle:
+        #         feat_mat = pickle.load(feature_handle)
+
         try:
-            with open(self.ptf + '/'+ filename + self.feature + '.pkl', 'rb') as feature_handle:
+            with open(self.ptf + '/'+ self.feature + '_' + filename + '.pkl', 'rb') as feature_handle:
                 feat_mat = pickle.load(feature_handle)
         except:
             # add this exception statement since we may change the data split
@@ -91,6 +106,6 @@ def repeat_padding(spec, ref_len):
 
 if __name__ == "__main__":
     # path_to_database = '/data/neil/DS_10283_3336/'  # if run on GPU
-    path_to_features = '/dataNVME/neil/ASVspoof2019Features/'  # if run on GPU
-    path_to_protocol = '/data/neil/DS_10283_3336/LA/ASVspoof2019_LA_cm_protocols/'
+    path_to_features = './LA/Features/'  # if run on GPU
+    path_to_protocol = '/home/hashim/PhD/Data/AsvSpoofData_2019/train/LA/ASVspoof2019_LA_cm_protocols/'
 

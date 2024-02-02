@@ -123,8 +123,8 @@ def train(args):
     valDataLoader = DataLoader(validation_set, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers,
                                collate_fn=validation_set.collate_fn)
 
-    feat, _, _, _ = training_set[29]
-    print("Feature shape", feat.shape)
+    feat, _, _, _ = training_set[0]
+    print("Feature shape = ", feat.shape)
 
     criterion = nn.CrossEntropyLoss()
 

@@ -20,8 +20,8 @@ def test_model(feat_model_path, loss_model_path, part, add_loss, device):
     model = torch.load(feat_model_path, map_location="cuda")
     model = model.to(device)
     loss_model = torch.load(loss_model_path) if add_loss != "softmax" else None
-    test_set = ASVspoof2019("LA", "/dataNVME/neil/ASVspoof2019LAFeatures/",
-                            "/data/neil/DS_10283_3336/LA/ASVspoof2019_LA_cm_protocols/", part,
+    test_set = ASVspoof2019("LA", "./LA/Features/",
+                            "/home/hashim/PhD/Data/AsvSpoofData_2019/train/LA/ASVspoof2019_LA_cm_protocols/", part,
                             "LFCC", feat_len=750, padding="repeat")
     testDataLoader = DataLoader(test_set, batch_size=32, shuffle=False, num_workers=0,
                                 collate_fn=test_set.collate_fn)
@@ -50,7 +50,7 @@ def test_model(feat_model_path, loss_model_path, part, add_loss, device):
                                           score[j].item()))
 
     eer_cm, min_tDCF = compute_eer_and_tdcf(os.path.join(dir_path, 'checkpoint_cm_score.txt'),
-                                            "/data/neil/DS_10283_3336/")
+                                            "/home/hashim/PhD/Data/AsvSpoofData_2019/train/")
     return eer_cm, min_tDCF
 
 def test(model_dir, add_loss, device):
@@ -139,6 +139,12 @@ if __name__ == "__main__":
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     test(args.model_dir, args.loss, args.device)
+
     # eer_cm_lst, min_tDCF_lst = test_individual_attacks(os.path.join(args.model_dir, 'checkpoint_cm_score.txt'))
     # print(eer_cm_lst)
     # print(min_tDCF_lst)
+
+    # cm_score_dir_path = "./models1028/ocsoftmax"
+    # eer_cm, min_tDCF = compute_eer_and_tdcf(os.path.join(cm_score_dir_path, 'checkpoint_cm_score.txt'), "/home/hashim/PhD/Data/AsvSpoofData_2019/train/")
+
+
